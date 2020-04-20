@@ -273,7 +273,7 @@ class ViewController: NSViewController {
                             let returnRange = (afterContent as NSString).range(of: "\n")
                             if returnRange.location != NSNotFound {
                                 let firstLineContent = (((afterContent as NSString).substring(to: returnRange.location) as NSString).replacingOccurrences(of: " ", with: "") as NSString).replacingOccurrences(of: "\r", with: "")
-                                if !firstLineContent.contains("(") && !firstLineContent.contains("=") && !firstLineContent.contains("?") && !firstLineContent.contains("!") && !firstLineContent.contains(")") {
+                                if !firstLineContent.contains("(") && !firstLineContent.contains("=") && !firstLineContent.contains("?") && !firstLineContent.contains("!") && !firstLineContent.contains(")") && !firstLineContent.contains("var") {
                                     let colonRange = (firstLineContent as NSString).range(of: ":")
                                     let parenthesesRange = (firstLineContent as NSString).range(of: "{")
                                     let arrowParenthesesRange = (firstLineContent as NSString).range(of: "<")
@@ -318,7 +318,7 @@ class ViewController: NSViewController {
                                 break
                             }
                         }
-                    }else if file.hasSuffix(".m") {
+                    } else if file.hasSuffix(".m") || file.hasSuffix(".mm") {
                         var range = fileContent!.range(of: "@implementation")
                         while range.location != NSNotFound {
                             let afterContent = fileContent!.substring(from: range.length + range.location)
@@ -339,7 +339,12 @@ class ViewController: NSViewController {
                                         }else {
                                             if !classNames.contains(firstLineContent) && !classNameArray.contains(firstLineContent) {
                                                 if firstLineContent.count > 0 {
-                                                    classNames.append(firstLineContent)
+                                                    if firstLineContent.hasSuffix("@end") == true {
+                                                        let preContent = firstLineContent.prefix(firstLineContent.count - 4)
+                                                        classNames.append(String(preContent))
+                                                    } else {
+                                                        classNames.append(firstLineContent)
+                                                    }
                                                 }
                                             }
                                         }
@@ -430,7 +435,7 @@ class ViewController: NSViewController {
                                     classNameArray.append(contentsOf: analysisEngineClassName(path: pathName, file: fileName))
                                 }
                             case .iOS:
-                                if fileName.hasSuffix(".swift") || fileName.hasSuffix(".m") {
+                                if fileName.hasSuffix(".swift") || fileName.hasSuffix(".m") || fileName.hasSuffix(".mm") {
                                     filePathArray.append(pathName)
                                     classNameArray.append(contentsOf: analysisEngineClassName(path: pathName, file: fileName))
                                 }else if fileName.hasSuffix(".h") {
@@ -600,15 +605,15 @@ class ViewController: NSViewController {
                         }
                     case .iOS:
                         if filePath.hasSuffix(".swift") {
-                            if handleFileContent.contains(className + ".") || handleFileContent.contains(className + "(") || handleFileContent.contains(":" + className) || handleFileContent.contains("as!" + className) || handleFileContent.contains("as?" + className) || handleFileContent.contains("[" + className + "]()") ||
-                                handleFileContent.contains(":[" + className + "]") ||
-                                handleFileContent.contains("<" + className + ">()") {
+                            if handleFileContent.contains(className + ".") || handleFileContent.contains(className + "(") || handleFileContent.contains(":" + className) || handleFileContent.contains("as!" + className) || handleFileContent.contains("as?" + className) || handleFileContent.contains("[" + className + "]") ||
+                                handleFileContent.contains("<" + className + ">") ||
+                                handleFileContent.contains(className + "<") {
                                 isReference = true
                                 break
                             }
-                        }else if filePath.hasSuffix(".m") {
-                            if handleFileContent.contains("[" + className) || handleFileContent.contains(className + ".new") || handleFileContent.contains(className + "*") ||
-                                handleFileContent.contains("<" + className + ">") || superClassArray.contains(className) {
+                        } else if filePath.hasSuffix(".m") || filePath.hasSuffix(".mm") {
+                                if handleFileContent.contains("[" + className) || handleFileContent.contains(className + ".new") || handleFileContent.contains(className + "new") || handleFileContent.contains("\"" + className + "\"") || handleFileContent.contains(className + "*") ||
+                                    handleFileContent.contains("<" + className + ">") || superClassArray.contains(className) || handleFileContent.contains(className + ",") || handleFileContent.contains("," + className) || handleFileContent.contains(className + "class") || handleFileContent.contains(className + ".class") || handleFileContent.contains(className + "alloc") {
                                 isReference = true
                                 break
                             }
